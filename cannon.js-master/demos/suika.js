@@ -8,6 +8,7 @@ if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 var dt = 1/60, N=40;
 
 var startTime = Date.now(), currentTime, cooldownTime;
+var timeLock = false;
 var mouseX, mouseY, mouseZ;
 var container, camera, scene, renderer;
 var meshes=[];
@@ -50,7 +51,7 @@ function init() {
     document.body.appendChild( container );
 
     // camera
-    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 100 );
+    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
 
     camera.position.set( 40, 40, 10);
     scene.add( camera );
@@ -169,7 +170,7 @@ function init() {
           
     // Create world
      
-    world.gravity.set(0, -9.82, 0);
+    world.gravity.set(0, -30, 0);
     world.broadphase = new CANNON.NaiveBroadphase();
     world.solver.iterations = 10;
 
@@ -195,54 +196,52 @@ function init() {
     world.addContactMaterial(stone_stone);
 
     // ground plane
-    var groundShape = new CANNON.Box(new CANNON.Vec3(5, 5, 0.1))
+    var groundShape = new CANNON.Box(new CANNON.Vec3(20, 20, 1))
     var groundBody = new CANNON.Body({ mass: 0, material: stone });
     groundBody.addShape(groundShape);
     groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2)
-    groundBody.position.set(0,0,0);
-    // groundBody.quaternions = mesh.quaternions;
+    groundBody.position.set(0, -1, 0);
     world.addBody(groundBody);
-    //demo.addVisual(groundBody);
 
-    // // Plane -y
-    // var planeShapeYmin = new CANNON.Plane();
-    // var planeYmin = new CANNON.Body({ mass: 0, material: stone });
-    // planeYmin.addShape(planeShapeYmin);
-    // planeYmin.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
-    // planeYmin.position.set(0,0,0);
-    // world.addBody(planeYmin);
+    // ceiling plane
+    var ceilingShape = new CANNON.Box(new CANNON.Vec3(20, 20, 1))
+    var ceilingBody = new CANNON.Body({ mass: 0, material: stone });
+    ceilingBody.addShape(ceilingShape);
+    ceilingBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2)
+    ceilingBody.position.set(0, 15, 0);
+    world.addBody(ceilingBody);
 
     // plane -x
-    var planeShapeXmin = new CANNON.Box(new CANNON.Vec3(5, 10, 0.1))
+    var planeShapeXmin = new CANNON.Box(new CANNON.Vec3(20, 20, 1))
     var planeXmin = new CANNON.Body({ mass: 0 });
     planeXmin.addShape(planeShapeXmin);
     planeXmin.quaternion.setFromAxisAngle(new CANNON.Vec3(0,1,0),Math.PI/2);
-    planeXmin.position.set(-5,5,0);
+    planeXmin.position.set(-5.9, 5, 0);
     world.addBody(planeXmin);
     //demo.addVisual(planeXmin);
 
     // Plane +x
-    var planeShapeXmax = new CANNON.Box(new CANNON.Vec3(5, 10, 0.1))
+    var planeShapeXmax = new CANNON.Box(new CANNON.Vec3(20, 20, 1))
     var planeXmax = new CANNON.Body({ mass: 0 });
     planeXmax.addShape(planeShapeXmax);
     planeXmax.quaternion.setFromAxisAngle(new CANNON.Vec3(0,1,0),-Math.PI/2);
-    planeXmax.position.set(5,5,0);
+    planeXmax.position.set(5.9, 5, 0);
     world.addBody(planeXmax);
 
     // Plane -y
-    var planeShapeYmin = new CANNON.Box(new CANNON.Vec3(5, 10, 0.1))
+    var planeShapeYmin = new CANNON.Box(new CANNON.Vec3(20, 20, 1))
     var planeYmin = new CANNON.Body({ mass: 0 });
     planeYmin.addShape(planeShapeYmin);
     planeYmin.quaternion.setFromAxisAngle(new CANNON.Vec3(0,0,0),-Math.PI/2);
-    planeYmin.position.set(0,5,-5);
+    planeYmin.position.set(0, 5, -5.5);
     world.addBody(planeYmin);
 
     // Plane +y
-    var planeShapeYmax = new CANNON.Box(new CANNON.Vec3(5, 10, 0.1))
+    var planeShapeYmax = new CANNON.Box(new CANNON.Vec3(20, 20, 1))
     var planeYmax = new CANNON.Body({ mass: 0 });
     planeYmax.addShape(planeShapeYmax);
     planeYmax.quaternion.setFromAxisAngle(new CANNON.Vec3(0,0,0),Math.PI/2);
-    planeYmax.position.set(0,5,5);
+    planeYmax.position.set(0, 5, 5.5);
     world.addBody(planeYmax);
 
     // var sphereShape = new CANNON.Sphere(2);
@@ -267,13 +266,7 @@ function init() {
     currentBall = generateBall(Math.floor(Math.random() * 2), false);
 }
 
-function generateBall(index, falls) {
-    // ThreeJS
-    const geometry = new THREE.SphereGeometry(ballSizes[index], widthsegments, heightsegments); 
-    const mesh = new THREE.Mesh(geometry, ballMats[index]);
-    mesh.position.set(mouseX, mouseY, mouseZ);
-    scene.add(mesh);
-          
+function generateBall(index, falls) {          
     // CannonJS
     const shape = new CANNON.Sphere(ballSizes[index]);
     var mass = 0; // If it shouldn't fall then setting the mass to zero will keep it stationary
@@ -284,6 +277,12 @@ function generateBall(index, falls) {
     const body = new CANNON.Body({ mass, shape });
     body.position.set(mouseX, mouseY, mouseZ);
     world.addBody(body);
+
+    // ThreeJS
+    const geometry = new THREE.SphereGeometry(ballSizes[index], widthsegments, heightsegments); 
+    const mesh = new THREE.Mesh(geometry, ballMats[index]);
+    mesh.position.copy(body.position);
+    scene.add(mesh);
           
     return {
         threejs: mesh,
@@ -300,7 +299,7 @@ function dropBall() {
     world.remove(currentBall.cannonjs);
     tempBall = generateBall(tempInt, true);
     tempBall.cannonjs.position.set(mouseX, mouseY - 2, mouseZ);
-    tempBall.threejs.position.set(mouseX, mouseY - 2, mouseZ);
+    tempBall.threejs.position.copy(tempBall.cannonjs.position);
     balls.push(tempBall);
     currentBall = generateBall(Math.floor(Math.random() * 2), false);
 }
@@ -315,8 +314,10 @@ function onWindowResize() {
 window.addEventListener('keydown', (event) => {
     if (event.code === 'Space') {
         currentTime = Date.now();
-        if (Math.floor((currentTime - startTime) / 1000) > 0) {
+        if (timeLock && (Math.floor((currentTime - startTime) / 1000) > 0)) {
             startTime = Date.now();
+            dropBall();
+        } else if (!timeLock) {
             dropBall();
         }
     }
@@ -326,8 +327,8 @@ window.addEventListener('keydown', (event) => {
         if (mouseZ >= 4){
             mouseZ = 4;
         }
-        currentBall.threejs.position.set(mouseX, mouseY, mouseZ);
         currentBall.cannonjs.position.set(mouseX, mouseY, mouseZ);
+        currentBall.threejs.position.copy(currentBall.cannonjs.position);
     }
       
     if (event.code == 'ArrowRight') {
@@ -335,8 +336,8 @@ window.addEventListener('keydown', (event) => {
         if (mouseZ <= -4){
             mouseZ = -4;
         }
-        currentBall.threejs.position.set(mouseX, mouseY, mouseZ);
         currentBall.cannonjs.position.set(mouseX, mouseY, mouseZ);
+        currentBall.threejs.position.copy(currentBall.cannonjs.position);
     }
       
     if (event.code == 'ArrowUp') {
@@ -344,8 +345,8 @@ window.addEventListener('keydown', (event) => {
         if (mouseX <= -4){
             mouseX = -4;
         }
-        currentBall.threejs.position.set(mouseX, mouseY, mouseZ);
         currentBall.cannonjs.position.set(mouseX, mouseY, mouseZ);
+        currentBall.threejs.position.copy(currentBall.cannonjs.position);
     }
       
     if (event.code == 'ArrowDown') {
@@ -353,20 +354,20 @@ window.addEventListener('keydown', (event) => {
         if (mouseX >= 4){
             mouseX = 4;
         }
-        currentBall.threejs.position.set(mouseX, mouseY, mouseZ);
         currentBall.cannonjs.position.set(mouseX, mouseY, mouseZ);
+        currentBall.threejs.position.copy(currentBall.cannonjs.position);
     }
       
 });
 
-function updateBodies() {
+function updateMeshes() {
     for (var i = 0; i < balls.length; i++) {
         balls[i].threejs.position.copy(balls[i].cannonjs.position);
     }
 }
 
 function animate() {
-    updateBodies();
+    updateMeshes();
     requestAnimationFrame( animate );
     world.step(1 / 60);
     // sphereMesh.position.copy(sphereBody.position);
@@ -375,7 +376,7 @@ function animate() {
 }
 
 function render() {
-    // cannonDebugRenderer.update();  
+    cannonDebugRenderer.update();  
     renderer.render( scene, camera );
 }
 
