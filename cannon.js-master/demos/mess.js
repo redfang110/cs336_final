@@ -12,10 +12,10 @@ let floorMat, wallMat, red_planeMat;
 let widthsegments = 32, heightsegments = 32;
 let currentBall;
 
-const sphereMaterial = new THREE.MeshBasicMaterial({ color: 'red' });
-const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-sphereMesh.position.set(0,.7,0);
-scene.add(sphereMesh);
+// const sphereMaterial = new THREE.MeshBasicMaterial({ color: 'red' });
+// const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+// sphereMesh.position.set(0,.7,0);
+// scene.add(sphereMesh);
 
 function initMats() {
   for (let i = 0; i < 5; i++) {
