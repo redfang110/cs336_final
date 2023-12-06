@@ -6,3 +6,35 @@ body {
     overflow: hidden;
     font-family: Monospace;
 }
+
+#score {
+    position: absolute;
+    color: white;
+    font-size: 3em;
+    font-weight: bold;
+    top: 30px;
+    right: 30px;
+  }
+
+#gameOver {
+    position: fixed;
+    color: white;
+    font-size: 6em;
+    font-weight: bold;
+    text-align: center;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+
+/* gameDiv {  
+    -webkit-transform: scale(0);
+    -moz-transform: scale(0);
+    -o-transform: scale(0);
+    transform: scale(0);
+}
+
+gameDiv.show{
+    transform: scale(1);
+} */

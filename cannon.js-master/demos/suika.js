@@ -21,6 +21,10 @@ var currentBall;
 var balls = [];
 var world = new CANNON.World();
 var gravityOscillationX = 0.01, gravityOscillationZ = 0.01;
+var showtop = false;
+var loseWarning = false;
+var score = 0;
+var finishedBalls = 0;
 scene = new THREE.Scene();
 
 //for debugging
@@ -313,6 +317,8 @@ function dropBall() {
     balls.push(tempBall);
     currentBall = generateBall(Math.floor(Math.random() * 2), false);
     gravityOscillation(4);
+    updateScore();
+    setTimeout(endGameCheck, 500);
 }
 
 // Noah
@@ -342,10 +348,24 @@ function onWindowResize() {
 }
 
 // Noah
+function endGameCheck() {
+    loseWarning = false;
+    for (var i = 0; i < balls.length; i++) {
+        if (balls[i].cannonjs.position.y > 13) {
+            loseWarning = true;
+        }
+        if (1 == 2) {
+            var gameOver = document.getElementById("gameOver");
+            gameOver.style.opacity = 1; 
+        }
+    }
+}
+
+// Noah
 window.addEventListener('keydown', (event) => {
     if (event.code === 'Space') {
         currentTime = Date.now();
-        if (timeLock && (Math.floor((currentTime - startTime) / 1000) > 0)) {
+        if (timeLock && (Math.floor((currentTime - startTime) / 1000) > 0.5)) {
             startTime = Date.now();
             dropBall();
         } else if (!timeLock) {
@@ -398,12 +418,49 @@ function updateMeshes() {
     }
 }
 
+// Noah
+function updateScore() {
+    score = 0;
+    for (var i = 0; i < balls.length; i++) {
+        score += scoreBall(ballSizes[balls[i].i]);
+    }
+    score += finishedBalls * 6;
+    var scoreItem = document.getElementById("score");
+    scoreItem.innerHTML = "Score: " + score;
+}
+
+// Noah
+function scoreBall(size) {
+    switch (size) {
+        case 0.5:
+            return 1;
+        case 0.6:
+            return 2;
+        case 1.0: 
+            return 3;
+        case 1.25:
+            return 4;
+        default:
+            return 5;
+    }
+}
+
 // Libby (Noah edited)
 function animate() {
+    if (loseWarning) {
+        showtop = !showtop;
+    } else {
+        showtop = false;
+    }
     updateMeshes();
     requestAnimationFrame( animate );
     world.step(1 / 60);
-    // sphereMesh.position.copy(sphereBody.position);
+    if(!showtop){
+        scene.remove(wallMesh); 
+    }
+    if(showtop){
+        scene.add(wallMesh);
+    }
     controls.update();
     render();
 }
