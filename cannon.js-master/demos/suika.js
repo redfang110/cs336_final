@@ -7,7 +7,7 @@
 if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 var dt = 1/60, N=40;
 
-      
+var startTime = Date.now(), currentTime, cooldownTime;
 var mouseX, mouseY, mouseZ;
 var container, camera, scene, renderer;
 var meshes=[];
@@ -50,9 +50,9 @@ function init() {
     document.body.appendChild( container );
 
     // camera
-    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 20, 100 );
+    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 100 );
 
-    camera.position.set( 40, 10, 20);
+    camera.position.set( 40, 40, 10);
     scene.add( camera );
 
     // Controls
@@ -294,10 +294,14 @@ function generateBall(index, falls) {
 }
 
 function dropBall() {
-    var temp = currentBall.i;
+    var tempInt = currentBall.i;
+    var tempBall;
     scene.remove(currentBall.threejs);
     world.remove(currentBall.cannonjs);
-    balls.push(generateBall(temp, true));
+    tempBall = generateBall(tempInt, true);
+    tempBall.cannonjs.position.set(mouseX, mouseY - 2, mouseZ);
+    tempBall.threejs.position.set(mouseX, mouseY - 2, mouseZ);
+    balls.push(tempBall);
     currentBall = generateBall(Math.floor(Math.random() * 2), false);
 }
 
@@ -310,14 +314,17 @@ function onWindowResize() {
 
 window.addEventListener('keydown', (event) => {
     if (event.code === 'Space') {
-        gameStart = true;
-        dropBall();
+        currentTime = Date.now();
+        if (Math.floor((currentTime - startTime) / 1000) > 0) {
+            startTime = Date.now();
+            dropBall();
+        }
     }
       
     if (event.code == 'ArrowLeft') {
         mouseZ += 0.5;
-        if (mouseZ >= 4.5){
-            mouseZ = 4.5;
+        if (mouseZ >= 4){
+            mouseZ = 4;
         }
         currentBall.threejs.position.set(mouseX, mouseY, mouseZ);
         currentBall.cannonjs.position.set(mouseX, mouseY, mouseZ);
@@ -325,8 +332,8 @@ window.addEventListener('keydown', (event) => {
       
     if (event.code == 'ArrowRight') {
         mouseZ -= 0.5;
-        if (mouseZ <= -4.5){
-            mouseZ = -4.5;
+        if (mouseZ <= -4){
+            mouseZ = -4;
         }
         currentBall.threejs.position.set(mouseX, mouseY, mouseZ);
         currentBall.cannonjs.position.set(mouseX, mouseY, mouseZ);
@@ -334,8 +341,8 @@ window.addEventListener('keydown', (event) => {
       
     if (event.code == 'ArrowUp') {
         mouseX -= 0.5;
-        if (mouseX <= -4.5){
-            mouseX = -4.5;
+        if (mouseX <= -4){
+            mouseX = -4;
         }
         currentBall.threejs.position.set(mouseX, mouseY, mouseZ);
         currentBall.cannonjs.position.set(mouseX, mouseY, mouseZ);
@@ -343,8 +350,8 @@ window.addEventListener('keydown', (event) => {
       
     if (event.code == 'ArrowDown') {
         mouseX += 0.5;
-        if (mouseX >= 4.5){
-            mouseX = 4.5;
+        if (mouseX >= 4){
+            mouseX = 4;
         }
         currentBall.threejs.position.set(mouseX, mouseY, mouseZ);
         currentBall.cannonjs.position.set(mouseX, mouseY, mouseZ);
@@ -368,6 +375,13 @@ function animate() {
 }
 
 function render() {
-    cannonDebugRenderer.update();  
+    // cannonDebugRenderer.update();  
     renderer.render( scene, camera );
 }
+
+setInterval(function() {
+    var delta = Date.now() - start; // milliseconds elapsed since start
+    output(Math.floor(delta / 1000)); // in seconds
+    // alternatively just show wall clock time:
+    output(new Date().toUTCString());
+}, 1000); // update about every second
