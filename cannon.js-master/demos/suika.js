@@ -8,7 +8,7 @@ if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 var dt = 1/60, N=40;
 
 var startTime = Date.now(), currentTime, cooldownTime;
-var timeLock = false;
+var timeLock = true;
 var mouseX, mouseY, mouseZ;
 var container, camera, scene, renderer;
 var meshes=[];
@@ -20,6 +20,7 @@ var widthsegments = 32, heightsegments = 32;
 var currentBall;
 var balls = [];
 var world = new CANNON.World();
+var gravityOscillationX = 0.01, gravityOscillationZ = 0.01;
 scene = new THREE.Scene();
 
 //for debugging
@@ -28,6 +29,7 @@ var cannonDebugRenderer = new THREE.CannonDebugRenderer( scene, world );
 init();
 animate();
 
+// Noah
 function initMats() {
     mat1 = new THREE.MeshBasicMaterial( { color: '#FF0000', side: THREE.DoubleSide } ); // red
     mat2 = new THREE.MeshBasicMaterial( { color: '#FFA500', side: THREE.DoubleSide } ); // orange
@@ -40,6 +42,7 @@ function initMats() {
     floorMat = new THREE.MeshLambertMaterial({ color });
 }
 
+// Libby (Noah edited)
 function init() {
     initMats();
     ballSizes.push(0.5, 0.6, 1.0, 1.25, 2.0);
@@ -170,9 +173,11 @@ function init() {
           
     // Create world
      
-    world.gravity.set(0, -30, 0);
+    // world.gravity.set(0, -30, 0);
     world.broadphase = new CANNON.NaiveBroadphase();
+    world.gravity.set(gravityOscillationX, -10, gravityOscillationZ);
     world.solver.iterations = 10;
+    world.solver.tolerance = 0.001;
 
     // Tweak contact properties.
     world.defaultContactMaterial.contactEquationStiffness = 1e11; // Contact stiffness - use to make softer/harder contacts
@@ -266,6 +271,7 @@ function init() {
     currentBall = generateBall(Math.floor(Math.random() * 2), false);
 }
 
+// Noah
 function generateBall(index, falls) {          
     // CannonJS
     const shape = new CANNON.Sphere(ballSizes[index]);
@@ -274,8 +280,12 @@ function generateBall(index, falls) {
         mass = 10;
         mass *= ballSizes[index];
     }
-    const body = new CANNON.Body({ mass, shape });
-    body.position.set(mouseX, mouseY, mouseZ);
+    const body = new CANNON.Body({ 
+        mass: mass, 
+        material: ballMats[index],
+        position: new CANNON.Vec3(mouseX, mouseY, mouseZ) 
+    });
+    body.addShape(shape);
     world.addBody(body);
 
     // ThreeJS
@@ -287,11 +297,11 @@ function generateBall(index, falls) {
     return {
         threejs: mesh,
         cannonjs: body,
-        // radius: ballSizes[index],
         i: index
     };
 }
 
+// Noah
 function dropBall() {
     var tempInt = currentBall.i;
     var tempBall;
@@ -302,8 +312,28 @@ function dropBall() {
     tempBall.threejs.position.copy(tempBall.cannonjs.position);
     balls.push(tempBall);
     currentBall = generateBall(Math.floor(Math.random() * 2), false);
+    gravityOscillation(4);
 }
 
+// Noah
+function gravityOscillation(ran) {
+    switch(Math.floor(Math.random() * ran)) {
+        case 0:
+            gravityOscillationX = gravityOscillationX * -1;
+            break;
+        case 1:
+            gravityOscillationZ = gravityOscillationZ * -1;
+            break;
+        case 2:
+            gravityOscillationX = gravityOscillationX * -1;
+            gravityOscillationZ = gravityOscillationZ * -1;
+            break;
+        default:
+            break;
+    }
+}
+
+// Libby
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -311,6 +341,7 @@ function onWindowResize() {
     renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
+// Noah
 window.addEventListener('keydown', (event) => {
     if (event.code === 'Space') {
         currentTime = Date.now();
@@ -360,12 +391,14 @@ window.addEventListener('keydown', (event) => {
       
 });
 
+// Noah
 function updateMeshes() {
     for (var i = 0; i < balls.length; i++) {
         balls[i].threejs.position.copy(balls[i].cannonjs.position);
     }
 }
 
+// Libby (Noah edited)
 function animate() {
     updateMeshes();
     requestAnimationFrame( animate );
@@ -375,14 +408,8 @@ function animate() {
     render();
 }
 
+// Libby
 function render() {
-    cannonDebugRenderer.update();  
+    // cannonDebugRenderer.update();  
     renderer.render( scene, camera );
 }
-
-setInterval(function() {
-    var delta = Date.now() - start; // milliseconds elapsed since start
-    output(Math.floor(delta / 1000)); // in seconds
-    // alternatively just show wall clock time:
-    output(new Date().toUTCString());
-}, 1000); // update about every second
