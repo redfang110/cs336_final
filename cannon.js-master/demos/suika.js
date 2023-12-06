@@ -14,6 +14,8 @@
       var world = new CANNON.World();
       scene = new THREE.Scene();
 
+      var showtop = false;
+
       //for debugging
       var cannonDebugRenderer = new THREE.CannonDebugRenderer( scene, world );
 
@@ -90,7 +92,7 @@
           material = new THREE.MeshLambertMaterial( { color: '#a5e0e6', side: THREE.DoubleSide, transparent: true, opacity: 0.3  } );
           wallMesh = new THREE.Mesh( wall1, material );
           wallMesh.castShadow = true;
-          wallMesh.receiveShadow = true;
+          //wallMesh.receiveShadow = true;
           wallMesh.position.y = 7.5;
           wallMesh.position.x = 5;
           meshes.push(wallMesh);
@@ -101,7 +103,7 @@
           material = new THREE.MeshLambertMaterial( { color: '#a5e0e6', side: THREE.DoubleSide, transparent: true, opacity: 0.3  } );
           wallMesh = new THREE.Mesh( wall2, material );
           wallMesh.castShadow = true;
-          wallMesh.receiveShadow = true;
+          //wallMesh.receiveShadow = true;
           wallMesh.position.y = 7.5;
           wallMesh.position.x = -5;
           meshes.push(wallMesh);
@@ -112,7 +114,7 @@
           material = new THREE.MeshLambertMaterial( { color: '#a5e0e6', side: THREE.DoubleSide, transparent: true, opacity: 0.3  } );
           wallMesh = new THREE.Mesh( wall3, material );
           wallMesh.castShadow = true;
-          wallMesh.receiveShadow = true;
+         // wallMesh.receiveShadow = true;
           wallMesh.position.y = 7.5;
           wallMesh.position.z = -5;
           meshes.push(wallMesh);
@@ -123,7 +125,7 @@
           material = new THREE.MeshLambertMaterial( { color: '#a5e0e6', side: THREE.DoubleSide, transparent: true, opacity: 0.3  } );
           wallMesh = new THREE.Mesh( wall4, material );
           wallMesh.castShadow = true;
-          wallMesh.receiveShadow = true;
+          //wallMesh.receiveShadow = true;
           wallMesh.position.y = 7.5;
           wallMesh.position.z = 5;
           meshes.push(wallMesh);
@@ -133,8 +135,8 @@
           wallTop.applyMatrix( new THREE.Matrix4().makeRotationX( Math.PI/2) );
           material = new THREE.MeshLambertMaterial( { color: 'red', side: THREE.DoubleSide, transparent: true, opacity: 0.3  } );
           wallMesh = new THREE.Mesh( wallTop, material );
-          wallMesh.castShadow = true;
-          wallMesh.receiveShadow = true;
+          //wallMesh.castShadow = true;
+          //wallMesh.receiveShadow = true;
           wallMesh.position.y = 15;
           //wallMesh.position.z = 5;
           meshes.push(wallMesh);
@@ -265,13 +267,37 @@
           world.step(1 / 60);
           sphereMesh.position.copy(sphereBody.position);
           controls.update();
+          if(!showtop){
+            scene.remove(wallMesh); 
+          }
+          if(showtop){
+             scene.add(wallMesh);
+          }
           render();
       }
 
       function render() {
-          cannonDebugRenderer.update();  
+        //  cannonDebugRenderer.update();  
           renderer.render( scene, camera );
-      }
+      } 
+
+
+      //added for testing
+      window.addEventListener('keydown', (event) => {
+        if (event.code === 'Space') {
+          showtop = !showtop;
+          var gameOver = document.getElementById("gameOver");
+          gameOver.style.opacity=1; 
+          // if(gameOver==true){
+          // gameOver.style.opacity=1; 
+          // }
+          // else{
+          //   gameOver.style.opacity=0;
+          // } 
+
+            }
+       
+      });
 
 
 
