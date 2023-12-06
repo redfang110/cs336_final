@@ -12,6 +12,10 @@
       var container, camera, scene, renderer;
       var meshes=[];
       var world = new CANNON.World();
+      scene = new THREE.Scene();
+
+      //for debugging
+      var cannonDebugRenderer = new THREE.CannonDebugRenderer( scene, world );
 
       init();
       animate();
@@ -22,7 +26,7 @@
           document.body.appendChild( container );
 
           // scene
-          scene = new THREE.Scene();
+         
 
           // const hlp = new THREE.AxesHelper(1);
           //  scene.add(hlp);
@@ -75,10 +79,8 @@
           // floor
           geometry = new THREE.PlaneGeometry( 100, 100, 1, 1 );
           geometry.applyMatrix( new THREE.Matrix4().makeRotationX( Math.PI / 2 ) );
-          material = new THREE.MeshLambertMaterial( { color: '#c48341', side: THREE.DoubleSide } );
-          //THREE.ColorUtils.adjustHSV( material.color, 0, 0, 0.9 );
+          material = new THREE.MeshBasicMaterial( { color: '#c48341', side: THREE.DoubleSide } );
           mesh = new THREE.Mesh( geometry, material );
-          mesh.castShadow = true;
           mesh.receiveShadow = true;
           meshes.push(mesh);
           scene.add(mesh);
@@ -151,7 +153,7 @@
           
       //  // Create world
      
-      world.gravity.set(0, 0, 0);
+      world.gravity.set(0, -9.82, 0);
       world.broadphase = new CANNON.NaiveBroadphase();
       world.solver.iterations = 10;
 
@@ -177,52 +179,62 @@
       world.addContactMaterial(stone_stone);
 
       // ground plane
-      var groundShape = new CANNON.Plane();
+      var groundShape = new CANNON.Box(new CANNON.Vec3(5, 5, 0.1))
       var groundBody = new CANNON.Body({ mass: 0, material: stone });
       groundBody.addShape(groundShape);
+      groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2)
+      groundBody.position.set(0,0,0);
      // groundBody.quaternions = mesh.quaternions;
       world.addBody(groundBody);
       //demo.addVisual(groundBody);
 
+      // // Plane -y
+      // var planeShapeYmin = new CANNON.Plane();
+      // var planeYmin = new CANNON.Body({ mass: 0, material: stone });
+      // planeYmin.addShape(planeShapeYmin);
+      // planeYmin.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
+      // planeYmin.position.set(0,0,0);
+      // world.addBody(planeYmin);
+
       // plane -x
-      var planeShapeXmin = new CANNON.Plane();
-      var planeXmin = new CANNON.Body({ mass: 0, material: stone });
+      var planeShapeXmin = new CANNON.Box(new CANNON.Vec3(5, 10, 0.1))
+      var planeXmin = new CANNON.Body({ mass: 0 });
       planeXmin.addShape(planeShapeXmin);
       planeXmin.quaternion.setFromAxisAngle(new CANNON.Vec3(0,1,0),Math.PI/2);
-      planeXmin.position.set(-5,0,0);
+      planeXmin.position.set(-5,5,0);
       world.addBody(planeXmin);
       //demo.addVisual(planeXmin);
 
       
       // Plane +x
-      var planeShapeXmax = new CANNON.Plane();
-      var planeXmax = new CANNON.Body({ mass: 0, material: stone });
+      var planeShapeXmax = new CANNON.Box(new CANNON.Vec3(5, 10, 0.1))
+      var planeXmax = new CANNON.Body({ mass: 0 });
       planeXmax.addShape(planeShapeXmax);
       planeXmax.quaternion.setFromAxisAngle(new CANNON.Vec3(0,1,0),-Math.PI/2);
-      planeXmax.position.set(5,0,0);
+      planeXmax.position.set(5,5,0);
       world.addBody(planeXmax);
 
       // Plane -y
-      var planeShapeYmin = new CANNON.Plane();
-      var planeYmin = new CANNON.Body({ mass: 0, material: stone });
+      var planeShapeYmin = new CANNON.Box(new CANNON.Vec3(5, 10, 0.1))
+      var planeYmin = new CANNON.Body({ mass: 0 });
       planeYmin.addShape(planeShapeYmin);
-      planeYmin.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
-      planeYmin.position.set(0,-5,0);
+      planeYmin.quaternion.setFromAxisAngle(new CANNON.Vec3(0,0,0),-Math.PI/2);
+      planeYmin.position.set(0,5,-5);
       world.addBody(planeYmin);
 
       // Plane +y
-      var planeShapeYmax = new CANNON.Plane();
-      var planeYmax = new CANNON.Body({ mass: 0,  material: stone });
+      var planeShapeYmax = new CANNON.Box(new CANNON.Vec3(5, 10, 0.1))
+      var planeYmax = new CANNON.Body({ mass: 0 });
       planeYmax.addShape(planeShapeYmax);
-      planeYmax.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),Math.PI/2);
-      planeYmax.position.set(0,5,0);
+      planeYmax.quaternion.setFromAxisAngle(new CANNON.Vec3(0,0,0),Math.PI/2);
+      planeYmax.position.set(0,5,5);
       world.addBody(planeYmax);
 
       var sphereShape = new CANNON.Sphere(2);
          sphereBody = new CANNON.Body({ mass: 5 });
          sphereBody.addShape(sphereShape);
         //sphereBody4.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 5);
-         sphereBody.position.set(0, 7, 0); // Start the sphere above the box
+         sphereBody.position.set(0, 10, 0); // Start the sphere above the box
         // sphereBody.angularFactor = new CANNON.Vec3(0, 0, 1);
          world.addBody(sphereBody);
 
@@ -257,6 +269,7 @@
       }
 
       function render() {
+          cannonDebugRenderer.update();  
           renderer.render( scene, camera );
       }
 
