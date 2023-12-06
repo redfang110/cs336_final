@@ -28,11 +28,11 @@ init();
 animate();
 
 function initMats() {
-    mat1 = new THREE.MeshBasicMaterial( { color: '#FF0000', side: THREE.DoubleSide } );
-    mat2 = new THREE.MeshBasicMaterial( { color: '#FFA500', side: THREE.DoubleSide } );
-    mat3 = new THREE.MeshBasicMaterial( { color: '#FFFF00', side: THREE.DoubleSide } );
-    mat4 = new THREE.MeshBasicMaterial( { color: '#00FF00', side: THREE.DoubleSide } );
-    mat5 = new THREE.MeshBasicMaterial( { color: '#0000FF', side: THREE.DoubleSide } );
+    mat1 = new THREE.MeshBasicMaterial( { color: '#FF0000', side: THREE.DoubleSide } ); // red
+    mat2 = new THREE.MeshBasicMaterial( { color: '#FFA500', side: THREE.DoubleSide } ); // orange
+    mat3 = new THREE.MeshBasicMaterial( { color: '#FFFF00', side: THREE.DoubleSide } ); // yellow
+    mat4 = new THREE.MeshBasicMaterial( { color: '#00FF00', side: THREE.DoubleSide } ); // green
+    mat5 = new THREE.MeshBasicMaterial( { color: '#0000FF', side: THREE.DoubleSide } ); // blue
     ballMats.push(mat1, mat2, mat3, mat4, mat5);
         
     const color = new THREE.Color(0xffffff);
@@ -288,7 +288,7 @@ function generateBall(index, falls) {
     return {
         threejs: mesh,
         cannonjs: body,
-        radius: ballSizes[index],
+        // radius: ballSizes[index],
         i: index
     };
 }
