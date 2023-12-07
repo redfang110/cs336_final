@@ -25,6 +25,8 @@ var showtop = false;
 var loseWarning = false;
 var score = 0;
 var finishedBalls = 0;
+var gameOver = false;
+var idCount = 0;
 scene = new THREE.Scene();
 
 //for debugging
@@ -35,12 +37,14 @@ animate();
 
 // Noah
 function initMats() {
-    mat1 = new THREE.MeshBasicMaterial( { color: '#FF0000', side: THREE.DoubleSide } ); // red
-    mat2 = new THREE.MeshBasicMaterial( { color: '#FFA500', side: THREE.DoubleSide } ); // orange
-    mat3 = new THREE.MeshBasicMaterial( { color: '#FFFF00', side: THREE.DoubleSide } ); // yellow
-    mat4 = new THREE.MeshBasicMaterial( { color: '#00FF00', side: THREE.DoubleSide } ); // green
-    mat5 = new THREE.MeshBasicMaterial( { color: '#0000FF', side: THREE.DoubleSide } ); // blue
-    ballMats.push(mat1, mat2, mat3, mat4, mat5);
+    mat1 = new THREE.MeshBasicMaterial( { color: '#000000', side: THREE.DoubleSide } ); // black
+    mat2 = new THREE.MeshBasicMaterial( { color: '#FF0000', side: THREE.DoubleSide } ); // red
+    mat3 = new THREE.MeshBasicMaterial( { color: '#FFA500', side: THREE.DoubleSide } ); // orange
+    mat4 = new THREE.MeshBasicMaterial( { color: '#FFFF00', side: THREE.DoubleSide } ); // yellow
+    mat5 = new THREE.MeshBasicMaterial( { color: '#FF80ED', side: THREE.DoubleSide } ); // pink?
+    mat6 = new THREE.MeshBasicMaterial( { color: '#00FF00', side: THREE.DoubleSide } ); // green
+    mat7 = new THREE.MeshBasicMaterial( { color: '#0000FF', side: THREE.DoubleSide } ); // blue
+    ballMats.push(mat1, mat2, mat3, mat4, mat5, mat6);
         
     const color = new THREE.Color(0xffffff);
     floorMat = new THREE.MeshLambertMaterial({ color });
@@ -49,7 +53,7 @@ function initMats() {
 // Libby (Noah edited)
 function init() {
     initMats();
-    ballSizes.push(0.5, 0.6, 1.0, 1.25, 2.0);
+    ballSizes.push(1, 1.25, 1.75, 2.0, 2.5, 2.75, 3.0);
     mouseX = 0; 
     mouseY = 16;
     mouseZ = 0;
@@ -155,8 +159,8 @@ function init() {
           
     wallTop = new THREE.PlaneGeometry( 10, 10, 1, 1 );
     wallTop.applyMatrix( new THREE.Matrix4().makeRotationX( Math.PI/2) );
-    material = new THREE.MeshLambertMaterial( { color: 'red', side: THREE.DoubleSide, transparent: true, opacity: 0.3  } );
-    wallMesh = new THREE.Mesh( wallTop, material );
+    red_planeMat = new THREE.MeshLambertMaterial( { color: 'red', side: THREE.DoubleSide, transparent: true, opacity: 0.3  } );
+    wallMesh = new THREE.Mesh( wallTop, red_planeMat );
     wallMesh.castShadow = true;
     wallMesh.receiveShadow = true;
     wallMesh.position.y = 15;
@@ -284,12 +288,29 @@ function generateBall(index, falls) {
         mass = 10;
         mass *= ballSizes[index];
     }
+
     const body = new CANNON.Body({ 
+        shape: shape,
+        type: CANNON.Body.DYNAMIC,
         mass: mass, 
         material: ballMats[index],
-        position: new CANNON.Vec3(mouseX, mouseY, mouseZ) 
+        position: new CANNON.Vec3(mouseX, mouseY, mouseZ),
+        id: idCount,
+        merged: false
     });
-    body.addShape(shape);
+
+    body.addEventListener('collide', (e) => {
+        if (e.body.material == e.target.material) {
+            if (!e.body.merged) {
+                e.body.merged = true;
+                e.target.merged = true;
+                mergeBalls(e.body, e.target);
+            }
+        }
+        // if (e.target.material == red_planeMat) {
+        //     setTimeout(gameOverTimer, 1000, e.body, e.body.position.y);
+        // }
+    });
     world.addBody(body);
 
     // ThreeJS
@@ -297,12 +318,77 @@ function generateBall(index, falls) {
     const mesh = new THREE.Mesh(geometry, ballMats[index]);
     mesh.position.copy(body.position);
     scene.add(mesh);
+    idCount++;
           
     return {
         threejs: mesh,
         cannonjs: body,
-        i: index
+        i: index,
     };
+}
+
+function gameOverTimer(body) {
+    console.log("gameOverTimer reached");
+    if (body.cannonjs.position.y >= 15 - ballSizes[body.i]) {
+        console.log("gameOverTimer gameOver");
+        gameOver = true;
+    }
+}
+
+// Seth (Noah changes)
+// Merges mergedBall1 and mergedBall2 into 1 ball a level higher
+function mergeBalls(mergedBall1, mergedBall2) {
+    // Find midpoint between balls
+    var newX;
+    var newY;
+    var newZ;
+    var newI;
+
+    if (mergedBall1.position.y < mergedBall2.position.y) {
+        newX = mergedBall1.position.x;
+        newY = mergedBall1.position.y;
+        newZ = mergedBall1.position.z;
+    } else {
+        newX = mergedBall2.position.x;
+        newY = mergedBall2.position.y;
+        newZ = mergedBall2.position.z;
+    }
+
+    // Delete ball 1 and 2 on ThreeJS, CannonJS, and balls[]
+    var tempInd1, tempInd2;
+    var found = false;
+    for (var i = 0; i < balls.length; i++) {
+        if (balls[i].cannonjs.id == mergedBall1.id || balls[i].cannonjs.id == mergedBall2.id) {
+            scene.remove(balls[i].threejs);
+            world.remove(balls[i].cannonjs);
+            newI = (balls[i].i) + 1;
+            if (found) {
+                tempInd2 = i;
+            } else {
+                tempInd1 = i;
+            }
+            found = true;
+        }
+    }
+    
+    var tempBalls = balls;
+    balls = [];
+    for (var i = 0; i < tempBalls.length; i++) {
+        if (i != tempInd1 && i != tempInd2) {
+            balls.push(tempBalls[i]);
+        }
+    }
+
+    if (newI > ballSizes.length - 1) {
+        finishedBalls++;
+        updateScore();
+        return;
+    }
+
+    var newBall = generateBall(newI, true);
+    newBall.cannonjs.position.set(newX, newY, newZ);
+    newBall.threejs.position.copy(newBall.cannonjs.position);
+    balls.push(newBall);
 }
 
 // Noah
@@ -312,13 +398,13 @@ function dropBall() {
     scene.remove(currentBall.threejs);
     world.remove(currentBall.cannonjs);
     tempBall = generateBall(tempInt, true);
-    tempBall.cannonjs.position.set(mouseX, mouseY - 2, mouseZ);
+    tempBall.cannonjs.position.set(mouseX, mouseY - 3, mouseZ);
     tempBall.threejs.position.copy(tempBall.cannonjs.position);
     balls.push(tempBall);
     currentBall = generateBall(Math.floor(Math.random() * 2), false);
     gravityOscillation(4);
     updateScore();
-    setTimeout(endGameCheck, 500);
+    setTimeout(endGameCheck, 2000);
 }
 
 // Noah
@@ -354,10 +440,10 @@ function endGameCheck() {
         if (balls[i].cannonjs.position.y > 13) {
             loseWarning = true;
         }
-        if (1 == 2) {
-            var gameOver = document.getElementById("gameOver");
-            gameOver.style.opacity = 1; 
-        }
+    }
+    if (gameOver) {
+        var gameEnds = document.getElementById("gameOver");
+        gameEnds.style.opacity = 1; 
     }
 }
 
@@ -415,6 +501,9 @@ window.addEventListener('keydown', (event) => {
 function updateMeshes() {
     for (var i = 0; i < balls.length; i++) {
         balls[i].threejs.position.copy(balls[i].cannonjs.position);
+        if (balls[i].cannonjs.position.y >= 15 - ballSizes[balls[i].i]) {
+            setTimeout(gameOverTimer, 2000, balls[i]);
+        }
     }
 }
 
@@ -422,27 +511,11 @@ function updateMeshes() {
 function updateScore() {
     score = 0;
     for (var i = 0; i < balls.length; i++) {
-        score += scoreBall(ballSizes[balls[i].i]);
+        score += balls[i].i + 1;
     }
     score += finishedBalls * 6;
     var scoreItem = document.getElementById("score");
     scoreItem.innerHTML = "Score: " + score;
-}
-
-// Noah
-function scoreBall(size) {
-    switch (size) {
-        case 0.5:
-            return 1;
-        case 0.6:
-            return 2;
-        case 1.0: 
-            return 3;
-        case 1.25:
-            return 4;
-        default:
-            return 5;
-    }
 }
 
 // Libby (Noah edited)
@@ -467,6 +540,6 @@ function animate() {
 
 // Libby
 function render() {
-    // cannonDebugRenderer.update();  
+    // cannonDebugRenderer.update();   
     renderer.render( scene, camera );
 }
