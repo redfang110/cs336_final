@@ -363,6 +363,7 @@ function mergeBalls(mergedBall1, mergedBall2) {
             world.remove(balls[i].cannonjs);
             newI = (balls[i].i) + 1;
             if (found) {
+                score += (balls[i].i + 1) * 2;
                 tempInd2 = i;
             } else {
                 tempInd1 = i;
@@ -403,7 +404,6 @@ function dropBall() {
     balls.push(tempBall);
     currentBall = generateBall(Math.floor(Math.random() * 2), false);
     gravityOscillation(4);
-    updateScore();
     setTimeout(endGameCheck, 2000);
 }
 
@@ -507,19 +507,10 @@ function updateMeshes() {
     }
 }
 
-// Noah
-function updateScore() {
-    score = 0;
-    for (var i = 0; i < balls.length; i++) {
-        score += (balls[i].i + 1) * 3;
-    }
-    score += finishedBalls * ((ballSizes.length + 1) * 5);
-    var scoreItem = document.getElementById("score");
-    scoreItem.innerHTML = "Score: " + score;
-}
-
 // Libby (Noah edited)
 function animate() {
+    var scoreItem = document.getElementById("score");
+    scoreItem.innerHTML = "Score: " + score;
     if (loseWarning) {
         showtop = !showtop;
     } else {
