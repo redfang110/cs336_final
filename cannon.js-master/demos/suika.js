@@ -285,7 +285,7 @@ function generateBall(index, falls) {
     const shape = new CANNON.Sphere(ballSizes[index]);
     var mass = 0; // If it shouldn't fall then setting the mass to zero will keep it stationary
     if (falls) {
-        mass = 10;
+        mass = 20;
         mass *= ballSizes[index];
     }
 
@@ -461,8 +461,8 @@ window.addEventListener('keydown', (event) => {
       
     if (event.code == 'ArrowLeft') {
         mouseZ += 0.5;
-        if (mouseZ >= 4){
-            mouseZ = 4;
+        if (mouseZ >= 4.5 - ballSizes[currentBall.i]){
+            mouseZ = 4.5 - ballSizes[currentBall.i];
         }
         currentBall.cannonjs.position.set(mouseX, mouseY, mouseZ);
         currentBall.threejs.position.copy(currentBall.cannonjs.position);
@@ -470,8 +470,8 @@ window.addEventListener('keydown', (event) => {
       
     if (event.code == 'ArrowRight') {
         mouseZ -= 0.5;
-        if (mouseZ <= -4){
-            mouseZ = -4;
+        if (mouseZ <= -4.5 + ballSizes[currentBall.i]){
+            mouseZ = -4.5 + ballSizes[currentBall.i];
         }
         currentBall.cannonjs.position.set(mouseX, mouseY, mouseZ);
         currentBall.threejs.position.copy(currentBall.cannonjs.position);
@@ -479,8 +479,8 @@ window.addEventListener('keydown', (event) => {
       
     if (event.code == 'ArrowUp') {
         mouseX -= 0.5;
-        if (mouseX <= -4){
-            mouseX = -4;
+        if (mouseX <= -4.5 + ballSizes[currentBall.i]){
+            mouseX = -4.5 + ballSizes[currentBall.i];
         }
         currentBall.cannonjs.position.set(mouseX, mouseY, mouseZ);
         currentBall.threejs.position.copy(currentBall.cannonjs.position);
@@ -488,8 +488,8 @@ window.addEventListener('keydown', (event) => {
       
     if (event.code == 'ArrowDown') {
         mouseX += 0.5;
-        if (mouseX >= 4){
-            mouseX = 4;
+        if (mouseX >= 4.5 - ballSizes[currentBall.i]){
+            mouseX = 4.5 - ballSizes[currentBall.i];
         }
         currentBall.cannonjs.position.set(mouseX, mouseY, mouseZ);
         currentBall.threejs.position.copy(currentBall.cannonjs.position);
@@ -511,9 +511,9 @@ function updateMeshes() {
 function updateScore() {
     score = 0;
     for (var i = 0; i < balls.length; i++) {
-        score += balls[i].i + 1;
+        score += (balls[i].i + 1) * 3;
     }
-    score += finishedBalls * 6;
+    score += finishedBalls * ((ballSizes.length + 1) * 5);
     var scoreItem = document.getElementById("score");
     scoreItem.innerHTML = "Score: " + score;
 }
